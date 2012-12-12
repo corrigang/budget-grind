@@ -5,11 +5,11 @@
 require_once('excel/PHPExcel.php');
 require_once('excel/PHPExcel/IOFactory.php');
 $db = new SQLite3('budget');
-$cols = array( 'account'=>1, 'entity'=>1, 'dept'=>1,'subdept'=>1,'natural'=>1,'desc'=>2,'subnatural'=>1,
-	'act_2ya'=>3,
-	'act_1ya'=>4,
-	'plan_1ya'=>5,
-	'plan' =>6 );
+$cols = array( 'account'=>1, 'entity'=>1, 'dept'=>1,'subdept'=>1,'natural'=>1,'desc'=>1,'subnatural'=>1,
+	'act_2ya'=>2,
+	'act_1ya'=>3,
+	'plan_1ya'=>4,
+	'plan' =>5 );
 
 initDb();
 
@@ -19,11 +19,11 @@ function initDb() {
 		drop table targets;
 		create table targets(id integer PRIMARY KEY,
 		  account text,
-		  entity integer,
-		  dept integer,
-		  subdept integer,
-		  natural integer,
-		  subnatural integer,
+		  entity text,
+		  dept text,
+		  subdept text,
+		  natural text,
+		  subnatural text,
 		  desc text,
 		  act_2ya real,
 		  act_1ya real,
@@ -49,12 +49,27 @@ for($i=0;$i<$rows;$i++) {
 }
 
 function processRow( $index ) {
-	echo( getVal($index,'entity'));
-	echo( getVal($index,'dept'));
-	echo( getVal($index,'subdept'));
-	echo( getVal($index,'natural'));
-	echo( getVal($index,'subnatural'));
-	echo("\n");
+	global $db;
+
+	$sql = <<<SQL
+	insert into targets(account,entity,dept,subdept,natural,subnatural,desc,act_2ya,act_1ya,plan_1ya,plan)
+	values (
+SQL;
+	$sql .= "'" . getVal($index,'account') . "',"; 
+	$sql .= "'" . getVal($index,'entity') . "',"; 
+	$sql .= "'" . getVal($index,'dept') . "',"; 
+	$sql .= "'" . getVal($index,'subdept') . "',"; 
+	$sql .= "'" . getVal($index,'natural') . "',"; 
+	$sql .= "'" . getVal($index,'subnatural') . "',"; 
+	$sql .= "'" . $db->escapeString(getVal($index,'desc')) . "',"; 
+	$sql .= "'" . getVal($index,'act_2ya') . "',"; 
+	$sql .= "'" . getVal($index,'act_1ya') . "',"; 
+	$sql .= "'" . getVal($index,'plan_1ya') . "',"; 
+	$sql .= "'" . getVal($index,'plan') . "'"; 
+	$sql .= ");";
+	// echo($sql);
+	$db->exec($sql);
+	echo( getVal($index,'account') . "\n");
 }
 
 function getVal( $index, $name ) {
@@ -66,6 +81,8 @@ function getVal( $index, $name ) {
 		switch($name) {
 			case 'account':
 				return substr($cell,0,17);
+			case 'desc':
+				return substr($cell,19);
 			case 'entity':
 				return $parts[0];
 				break;
@@ -73,7 +90,7 @@ function getVal( $index, $name ) {
 				return substr($parts[1],0,2);
 				break;
 			case 'subdept':
-				return substr($parts[1],3,2);
+				return substr($parts[1],2,2);
 				break;
 			case 'natural':
 				return $parts[2];
